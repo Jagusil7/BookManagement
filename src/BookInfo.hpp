@@ -36,10 +36,13 @@ class Book {
     // Search book by title or writer
     void bookSearch();
 
+
+    Book* next = nullptr;
   private:
     char title[MAX_NAME_LEN];
     char writer[MAX_NAME_LEN];
     char bookNum[MAX_NAME_LEN];
     bool status;
+   
 };
 #endif

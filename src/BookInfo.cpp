@@ -35,7 +35,10 @@ void Book::setStatus() {
         this->status = 0;
 }
 
+
+ 
 string Book::getTitle() { return string(this->title); }
 string Book::getWriter() { return string(this->writer); }
 string Book::getBookNum() { return string(this->bookNum); }
 bool Book::getStatus() { return this->status; }
+
