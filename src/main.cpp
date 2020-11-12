@@ -24,12 +24,26 @@ list<Book>::iterator find_title(list<Book>& myList, string compare) {
         if ((*it).getTitle().find(compare) != string::npos)
             return it;
     }
-    return myList.end(); // C++에서 iterator는 null을 가질 수 없어서 이렇게 반환.
+    return myList.end();
+}
+list<Book>::iterator find_writer_same(list<Book>& myList, string compare) {
+    list<Book>::iterator it;
+    for (it = myList.begin(); it != myList.end(); ++it) {
+        if ((*it).getWriter() == compare) {
+            return it;
+        }
+    }
+    return myList.end();
+}
+list<Book>::iterator find_writer(list<Book>& myList, string compare) {
+    list<Book>::iterator it;
+    for (it = myList.begin(); it != myList.end(); ++it) {
+        if ((*it).getWriter().find(compare) != string::npos)
+            return it;
+    }
+    return myList.end();
 }
 
-
 int main() {
-    list<Book> bookList;
-    list<Book>::iterator it;
-
+    return 0;
 }
