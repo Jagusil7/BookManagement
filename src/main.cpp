@@ -1,12 +1,17 @@
-#include "BookInfo.hpp"
+#include <fcntl.h>
 #include <iostream>
-#include <string.h>
-#include <string>
 #include <list>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "BookInfo.hpp"
 
 using namespace std;
 
-// title·Î µµ¼­ Ã£±â (¿ÏÀü ÀÏÄ¡ ±âÁØ)
+// titleë¡œ ë„ì„œ ì°¾ê¸° (ì™„ì „ ì¼ì¹˜ ê¸°ì¤€)
 list<Book>::iterator find_title_same(list<Book> &myList, string compare) {
     list<Book>::iterator it;
     for (it = myList.begin(); it != myList.end(); ++it) {
@@ -15,10 +20,10 @@ list<Book>::iterator find_title_same(list<Book> &myList, string compare) {
         }
     }
     return myList.end();
-    // C++¿¡¼­ iterator´Â nullÀ» °¡Áú ¼ö ¾ø¾î¼­ ÀÌ·¸°Ô ¹İÈ¯.
+    // C++ì—ì„œ iteratorëŠ” nullì„ ê°€ì§ˆ ìˆ˜ ì—†ì–´ì„œ ì´ë ‡ê²Œ ë°˜í™˜.
 }
-// title·Î µµ¼­ Ã£±â (ÇØ´ç ¹®ÀÚ¿­ Æ÷ÇÔ ±âÁØ)
-list<Book>::iterator find_title(list<Book>& myList, string compare) {
+// titleë¡œ ë„ì„œ ì°¾ê¸° (í•´ë‹¹ ë¬¸ìì—´ í¬í•¨ ê¸°ì¤€)
+list<Book>::iterator find_title(list<Book> &myList, string compare) {
     list<Book>::iterator it;
     for (it = myList.begin(); it != myList.end(); ++it) {
         if ((*it).getTitle().find(compare) != string::npos)
@@ -26,7 +31,7 @@ list<Book>::iterator find_title(list<Book>& myList, string compare) {
     }
     return myList.end();
 }
-list<Book>::iterator find_writer_same(list<Book>& myList, string compare) {
+list<Book>::iterator find_writer_same(list<Book> &myList, string compare) {
     list<Book>::iterator it;
     for (it = myList.begin(); it != myList.end(); ++it) {
         if ((*it).getWriter() == compare) {
@@ -35,7 +40,7 @@ list<Book>::iterator find_writer_same(list<Book>& myList, string compare) {
     }
     return myList.end();
 }
-list<Book>::iterator find_writer(list<Book>& myList, string compare) {
+list<Book>::iterator find_writer(list<Book> &myList, string compare) {
     list<Book>::iterator it;
     for (it = myList.begin(); it != myList.end(); ++it) {
         if ((*it).getWriter().find(compare) != string::npos)
@@ -45,28 +50,116 @@ list<Book>::iterator find_writer(list<Book>& myList, string compare) {
 }
 
 int main() {
+    int fd = 0;
+    string filename = "./BookList.dat";
+
     list<Book> bookList;
-    list<Book>::iterator it;
+    list<Book>::iterator iter;
 
-    //* ÀÌÇÏ Å×½ºÆ®
-    Book myBook("Title1", "Me1", "2");
-    bookList.push_back(myBook);
-    myBook = Book("Title2", "Me2", "2");
-    bookList.push_back(myBook);
-    myBook = Book("Title3", "Me3", "2");
-    bookList.push_back(myBook);
+    fd = open(filename.c_str(), O_CREAT | O_RDWR, 0644);
+    if (fd == -1) {
+        cout << "open() error!" << endl;
+        exit(-1);
+    }
+    Book *buf = new Book();
+    while (read(fd, buf, sizeof(Book)) != 0) {
+        Book book(buf->getTitle(), buf->getWriter(), buf->getBookNum());
+        bookList.push_back(book);
+    }
 
-    it = find_title_same(bookList, "Title1");
-    if (it == bookList.end())
-        cout << "Ã£´Â µµ¼­°¡ ¾øÀ½." << endl;
-    else
-        cout << "µµ¼­ Á¸Àç. ÀúÀÚ: " + (*it).getWriter() << endl;
+    while (1) {
+        cout << "<MENU>" << endl
+             << "[0] Add Book" << endl
+             << "[1] Delete Book" << endl
+             << "[2] Print List" << endl
+             << "[3] Search" << endl
+             << "[4] Save and Exit" << endl
+             << ">>";
+        int menu;
+        cin >> menu;
+        cout << endl;
+        if (menu == 0) { // add book
+            string title = "";
+            string writer = "";
+            string bookN = "";
 
-    it = find_title(bookList, "3");
-    if (it == bookList.end())
-        cout << "ÇØ´ç ¹®ÀÚ¿­ÀÌ µé¾î°£ µµ¼­ ¾øÀ½." << endl;
-    else
-        cout << "ÇØ´ç ¹®ÀÚ¿­ÀÌ µé¾î°£ µµ¼­ Á¸Àç. ÀúÀÚ: " + (*it).getWriter() << endl;
+            cout << "[ADD]" << endl << "Title: ";
+            cin >> title;
+            cout << "Writer: ";
+            cin >> writer;
+            cout << "BookNo.: ";
+            cin >> bookN;
 
-    return 0;
+            Book book(title, writer, bookN);
+            bookList.push_back(book);
+
+        } else if (menu == 1) { // delete book
+            string del;
+            cout << "[DELETE]" << endl << "Title: ";
+            cin >> del;
+            for (iter = bookList.begin(); iter != bookList.end(); iter++) {
+                if (iter->getTitle() == del) {
+                    bookList.erase(iter);
+                    break;
+                }
+            }
+            if (iter == bookList.end()) {
+                cout << "ERROR: doesn't exist";
+            }
+        } else if (menu == 2) { // print list
+            cout << "[PRINT]" << endl;
+            for (iter = bookList.begin(); iter != bookList.end(); ++iter) {
+                cout << "TITLE:" << iter->getTitle()
+                     << " WRITER:" << iter->getWriter()
+                     << " BOOKNUM:" << iter->getBookNum()
+                     << " STATUS:" << iter->getStatus() << endl;
+            }
+
+        } else if (menu == 3) {
+            cout << "[SEARCH]" << endl;
+            cout << "Find Title: ";
+            string title;
+            cin >> title;
+            iter = find_title_same(bookList, title);
+            if (iter == bookList.end()) {
+                iter = find_title(bookList, title);
+                if (iter == bookList.end())
+                    cout << "ì°¾ëŠ” ë„ì„œê°€ ì—†ìŒ." << endl;
+                else
+                    cout << "í•´ë‹¹ ë¬¸ìì—´ì´ ë“¤ì–´ê°„ ë„ì„œ ì¡´ì¬." << endl
+                         << "TITLE:" << iter->getTitle()
+                         << " WRITER:" << iter->getWriter()
+                         << " BOOKNUM:" << iter->getBookNum()
+                         << " STATUS:" << iter->getStatus() << endl;
+            } else
+                cout << "ë„ì„œ ì¡´ì¬." << endl
+                     << "TITLE:" << iter->getTitle()
+                     << " WRITER:" << iter->getWriter()
+                     << " BOOKNUM:" << iter->getBookNum()
+                     << " STATUS:" << iter->getStatus() << endl;
+
+        } else if (menu == 4) { // save doc and exit
+            if (remove(filename.c_str()) == -1) {
+                perror("remove() error!");
+                exit(-1);
+            }
+            fd = open(filename.c_str(), O_CREAT | O_RDWR, 0644);
+            if (fd == -1) {
+                perror("init() error!");
+                exit(-1);
+            }
+            ssize_t wsize = 0;
+            for (iter = bookList.begin(); iter != bookList.end(); iter++) {
+                wsize = write(fd, &(*iter), sizeof(Book));
+                if (wsize == -1) {
+                    cout << "write() error!" << endl;
+                    exit(-1);
+                }
+            }
+
+            close(fd);
+            return 0;
+        }
+        cout << endl;
+    }
 }
