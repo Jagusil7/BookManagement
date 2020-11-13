@@ -24,13 +24,12 @@ class Book {
         memset(this->bookNum, 0x00, MAX_NAME_LEN + 1);
         this->status = 0;
     }
-    Book(string title, string writer, string bookNum) {
+    Book(string title, string writer, string bookNum, int id = 0) {
         memcpy(this->title, title.c_str(), MAX_NAME_LEN);
         memcpy(this->writer, writer.c_str(), MAX_NAME_LEN);
         memcpy(this->bookNum, bookNum.c_str(), MAX_NAME_LEN);
-        this->status = 0;
+        this->status = id;
     }
-
     void setTitle(string title) {
         memcpy(this->title, title.c_str(), MAX_NAME_LEN);
     }
@@ -74,12 +73,12 @@ class Book {
 
 // 모드에 따라 이름/저자로 완전히 일치하는 도서 찾기
 // moode: 0(제목), 기타(저자)
-list<Book>::iterator find_same(list<Book> &myList, int mode, string compare) {
+list<Book>::iterator findSame(list<Book> &myList, int mode, string compare) {
     list<Book>::iterator it;
     string temp;
     for (it = myList.begin(); it != myList.end(); ++it) {
         if (mode == 0)
-            temp = (*it).getTitle();
+            temp = it->getTitle();
         else
             temp = (*it).getWriter();
         if (temp == compare) {
@@ -90,8 +89,7 @@ list<Book>::iterator find_same(list<Book> &myList, int mode, string compare) {
     // C++에서 iterator는 null을 가질 수 없어서 이렇게 반환.
 }
 // 해당 문자열이 포함된 도서 찾기. mode는 동일.
-list<Book>::iterator find_contain(list<Book> &myList, int mode,
-                                  string compare) {
+list<Book>::iterator findContain(list<Book> &myList, int mode, string compare) {
     list<Book>::iterator it;
     string temp;
     for (it = myList.begin(); it != myList.end(); ++it) {
@@ -104,6 +102,27 @@ list<Book>::iterator find_contain(list<Book> &myList, int mode,
         }
     }
     return myList.end();
+}
+
+// 출력 (반복되는 부분 정리)
+void printStyle(list<Book>::iterator &iter) {
+    cout << "TITLE:" << iter->getTitle() << " WRITER:" << iter->getWriter()
+         << " BOOKNUM:" << iter->getBookNum() << " STATUS:" << iter->getStatus()
+         << endl;
+}
+
+// 해당 아이디로 빌린 도서 출력 (없으면 false)
+bool printRent(list<Book> &myList, int id) {
+    list<Book>::iterator it;
+    bool result = false;
+
+    for (it = myList.begin(); it != myList.end(); ++it) {
+        if ((*it).getStatus() == id) {
+            result = true;
+            printStyle(it);
+        }
+    }
+    return result;
 }
 
 int main() {
@@ -120,7 +139,8 @@ int main() {
     }
     Book *buf = new Book();
     while (read(fd, buf, sizeof(Book)) != 0) {
-        Book book(buf->getTitle(), buf->getWriter(), buf->getBookNum());
+        Book book(buf->getTitle(), buf->getWriter(), buf->getBookNum(),
+                  buf->getStatus());
         bookList.push_back(book);
     }
 
@@ -130,11 +150,14 @@ int main() {
              << "[1] Delete Book" << endl
              << "[2] Print List" << endl
              << "[3] Search" << endl
-             << "[4] Save and Exit" << endl
-             << ">>";
+             << "[4] Rent" << endl
+             << "[5] Print My Rented Book" << endl
+             << "[6] Save and Exit" << endl
+             << ">> ";
         int menu;
         cin >> menu;
         cout << endl;
+
         if (menu == 0) { // add book
             string title = "";
             string writer = "";
@@ -144,7 +167,7 @@ int main() {
             cin >> title;
             cout << "Writer: ";
             cin >> writer;
-            cout << "BookNo.: ";
+            cout << "BookNo: ";
             cin >> bookN;
 
             Book book(title, writer, bookN);
@@ -166,35 +189,57 @@ int main() {
         } else if (menu == 2) { // print list
             cout << "[PRINT]" << endl;
             for (iter = bookList.begin(); iter != bookList.end(); ++iter) {
-                cout << "TITLE:" << iter->getTitle()
-                     << " WRITER:" << iter->getWriter()
-                     << " BOOKNUM:" << iter->getBookNum()
-                     << " STATUS:" << iter->getStatus() << endl;
+                printStyle(iter);
             }
         } else if (menu == 3) {
             cout << "[SEARCH]" << endl;
             cout << "Find Title: ";
             string title;
             cin >> title;
-            iter = find_same(bookList, 0, title);
+            iter = findSame(bookList, 0, title);
             if (iter == bookList.end()) {
-                iter = find_contain(bookList, 0, title);
+                iter = findContain(bookList, 0, title);
                 if (iter == bookList.end())
-                    cout << "찾는 도서가 없음." << endl;
-                else
-                    cout << "해당 문자열이 들어간 도서 존재." << endl
-                         << "TITLE:" << iter->getTitle()
-                         << " WRITER:" << iter->getWriter()
-                         << " BOOKNUM:" << iter->getBookNum()
-                         << " STATUS:" << iter->getStatus() << endl;
-            } else
-                cout << "도서 존재." << endl
-                     << "TITLE:" << iter->getTitle()
-                     << " WRITER:" << iter->getWriter()
-                     << " BOOKNUM:" << iter->getBookNum()
-                     << " STATUS:" << iter->getStatus() << endl;
+                    cout << "찾는 도서가 없습니다." << endl;
+                else {
+                    cout << "해당 문자열이 들어간 도서가 존재합니다." << endl;
+                    printStyle(iter);
+                }
+            } else {
+                printStyle(iter);
+            }
+        } else if (menu == 4) {
+            string title;
+            int id;
 
-        } else if (menu == 4) { // save doc and exit
+            cout << "[RENT]" << endl;
+            cout << "Title: ";
+            cin >> title;
+            iter = findSame(bookList, 0, title);
+            if (iter == bookList.end()) {
+                cout << "없는 도서입니다." << endl << endl;
+                continue;
+            }
+            if (iter->getStatus() != 0) {
+                cout << "이미 대여 중인 도서입니다." << endl << endl;
+                continue;
+            }
+            cout << "Enter target ID: ";
+            cin >> id;
+
+            iter->setStatus(id);
+            cout << "빌렸습니다. (ID:" << id << ")" << endl;
+
+        } else if (menu == 5) {
+            int id;
+
+            cout << "[INQUIRY]" << endl;
+            cout << "Enter target ID: ";
+            cin >> id;
+            if (printRent(bookList, id) == false) {
+                cout << "Nothing." << endl;
+            }
+        } else if (menu == 6) { // save doc and exit
             if (remove(filename.c_str()) == -1) {
                 perror("remove() error!");
                 exit(-1);
