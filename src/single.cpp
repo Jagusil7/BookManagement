@@ -72,55 +72,40 @@ class Book {
     int publishing;
 };
 
-// title로 도서 찾기 (완전 일치 기준)
-list<Book>::iterator find_title_same(list<Book> &myList, string compare) {
+// 모드에 따라 이름/저자로 완전히 일치하는 도서 찾기
+// moode: 0(제목), 기타(저자)
+list<Book>::iterator find_same(list<Book> &myList, int mode, string compare) {
     list<Book>::iterator it;
+    string temp;
     for (it = myList.begin(); it != myList.end(); ++it) {
-        if ((*it).getTitle() == compare) {
+        if (mode == 0)
+            temp = (*it).getTitle();
+        else
+            temp = (*it).getWriter();
+        if (temp == compare) {
             return it;
         }
     }
     return myList.end();
     // C++에서 iterator는 null을 가질 수 없어서 이렇게 반환.
 }
-// title로 도서 찾기 (해당 문자열 포함 기준)
-list<Book>::iterator find_title(list<Book> &myList, string compare) {
+// 해당 문자열이 포함된 도서 찾기. mode는 동일.
+list<Book>::iterator find_contain(list<Book> &myList, int mode,
+                                  string compare) {
     list<Book>::iterator it;
+    string temp;
     for (it = myList.begin(); it != myList.end(); ++it) {
-        if ((*it).getTitle().find(compare) != string::npos)
-            return it;
-    }
-    return myList.end();
-}
-list<Book>::iterator find_writer_same(list<Book> &myList, string compare) {
-    list<Book>::iterator it;
-    for (it = myList.begin(); it != myList.end(); ++it) {
-        if ((*it).getWriter() == compare) {
+        if (mode == 0)
+            temp = (*it).getTitle();
+        else
+            temp = (*it).getWriter();
+        if (temp.find(compare) != string::npos) {
             return it;
         }
     }
     return myList.end();
 }
-list<Book>::iterator find_writer(list<Book> &myList, string compare) {
-    list<Book>::iterator it;
-    for (it = myList.begin(); it != myList.end(); ++it) {
-        if ((*it).getWriter().find(compare) != string::npos)
-            return it;
-    }
-    return myList.end();
-}
 
-int main() {
-    list<Book> bk;
-    list<Book>::iterator it;
-    Book temp = Book("title1", "you", "c1");
-    bk.push_back(temp);
-    temp = Book("title1", "you", "c2");
-    bk.push_back(temp);
-    it = find_title_same(bk, "title1");
-}
-
-/*
 int main() {
     int fd = 0;
     string filename = "./BookList.dat";
@@ -186,15 +171,14 @@ int main() {
                      << " BOOKNUM:" << iter->getBookNum()
                      << " STATUS:" << iter->getStatus() << endl;
             }
-
         } else if (menu == 3) {
             cout << "[SEARCH]" << endl;
             cout << "Find Title: ";
             string title;
             cin >> title;
-            iter = find_title_same(bookList, title);
+            iter = find_same(bookList, 0, title);
             if (iter == bookList.end()) {
-                iter = find_title(bookList, title);
+                iter = find_contain(bookList, 0, title);
                 if (iter == bookList.end())
                     cout << "찾는 도서가 없음." << endl;
                 else
@@ -228,11 +212,9 @@ int main() {
                     exit(-1);
                 }
             }
-
             close(fd);
             return 0;
         }
         cout << endl;
     }
 }
-*/
