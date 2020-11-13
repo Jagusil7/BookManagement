@@ -40,17 +40,14 @@ class Book {
     void setBookNum(string bookNum) {
         memcpy(this->bookNum, bookNum.c_str(), MAX_NAME_LEN);
     }
-    void setStatus() {
-        if (this->status == 0)
-            this->status = 1;
-        else if (this->status == 1)
-            this->status = 0;
-    }
+    void setPublishing(int pub) { this->publishing = pub; }
+    void setStatus(int want) { this->status = want; }
 
     string getTitle() { return string(this->title); }
     string getWriter() { return string(this->writer); }
     string getBookNum() { return string(this->bookNum); }
-    bool getStatus() { return this->status; }
+    int getStatus() { return this->status; }
+    int getPublishing() { return this->publishing; }
 
     // Resgister book
     void bookRegi();
@@ -71,7 +68,8 @@ class Book {
     char title[MAX_NAME_LEN];
     char writer[MAX_NAME_LEN];
     char bookNum[MAX_NAME_LEN];
-    bool status;
+    int status;
+    int publishing;
 };
 
 // title로 도서 찾기 (완전 일치 기준)
