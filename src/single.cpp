@@ -11,7 +11,7 @@
 #include <string>
 
 using namespace std;
-#define MAX_NAME_LEN 32
+#define MAX_NAME_LEN 64
 
 // 디버그 편의를 위해 단일 파일로 제작.
 // 추후 완전히 완성 후 분리.
@@ -156,6 +156,7 @@ int main() {
              << ">> ";
         int menu;
         cin >> menu;
+        getchar();
         cout << endl;
 
         if (menu == 0) { // add book
@@ -164,11 +165,11 @@ int main() {
             string bookN = "";
 
             cout << "[ADD]" << endl << "Title: ";
-            cin >> title;
+            getline(cin, title);
             cout << "Writer: ";
-            cin >> writer;
+            getline(cin, writer);
             cout << "BookNo: ";
-            cin >> bookN;
+            getline(cin, bookN);
 
             Book book(title, writer, bookN);
             bookList.push_back(book);
@@ -176,7 +177,8 @@ int main() {
         } else if (menu == 1) { // delete book
             string del;
             cout << "[DELETE]" << endl << "Title: ";
-            cin >> del;
+            getline(cin, del);
+
             for (iter = bookList.begin(); iter != bookList.end(); iter++) {
                 if (iter->getTitle() == del) {
                     bookList.erase(iter);
@@ -195,7 +197,8 @@ int main() {
             cout << "[SEARCH]" << endl;
             cout << "Find Title: ";
             string title;
-            cin >> title;
+            getline(cin, title);
+
             iter = findSame(bookList, 0, title);
             if (iter == bookList.end()) {
                 iter = findContain(bookList, 0, title);
@@ -214,7 +217,8 @@ int main() {
 
             cout << "[RENT]" << endl;
             cout << "Title: ";
-            cin >> title;
+            getline(cin, title);
+
             iter = findSame(bookList, 0, title);
             if (iter == bookList.end()) {
                 cout << "없는 도서입니다." << endl << endl;
@@ -226,7 +230,7 @@ int main() {
             }
             cout << "Enter target ID: ";
             cin >> id;
-
+            getchar();
             iter->setStatus(id);
             cout << "빌렸습니다. (ID:" << id << ")" << endl;
 
@@ -236,6 +240,8 @@ int main() {
             cout << "[INQUIRY]" << endl;
             cout << "Enter target ID: ";
             cin >> id;
+            getchar();
+
             if (printRent(bookList, id) == false) {
                 cout << "Nothing." << endl;
             }
