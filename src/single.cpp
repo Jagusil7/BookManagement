@@ -12,6 +12,8 @@
 
 using namespace std;
 #define MAX_NAME_LEN 64
+#define MAX_ID_LEN 10
+
 
 // 디버그 편의를 위해 단일 파일로 제작.
 // 추후 완전히 완성 후 분리.
@@ -71,8 +73,65 @@ class Book {
     int publishing;
 };
 
+// guest만 가입 가능/ 관리자는 main함수 처음에(id:manager123, password:ilovebook,
+// personalNum:0)로 따로 만들어주세요!
+class Login {
+public:
+    Login() {
+        memset(this->id, 0x00, MAX_NAME_LEN + 1);
+        memset(this->password, 0x00, MAX_NAME_LEN + 1);
+        this->personalNo = 0;
+    }
+    Login(string id, string password) {
+        number = 0;
+
+        memcpy(this->id, id.c_str(), MAX_NAME_LEN);
+        memcpy(this->password, password.c_str(), MAX_NAME_LEN);
+        this->personalNo =
+            ++number; // guest 가입하면 자동적으로 1부터 personalnumber 부여(따로 넣어줄 필요 X)
+    }
+
+    void setId(string id) { memcpy(this->id, id.c_str(), MAX_NAME_LEN); }
+    void setPassword(string password) {
+        memcpy(this->password, password.c_str(), MAX_NAME_LEN);
+    }
+    void setPersonalNo(int personalNo) { this->personalNo = personalNo; }
+
+    string getId() { return string(this->id); }
+    string getPassword() { return string(this->password); }
+    int getPersonalNo() { return this->personalNo; }
+
+    static int number;
+
+private:
+    char id[MAX_ID_LEN];
+    char password[MAX_ID_LEN];
+    int personalNo;
+};
+
+//인자로 로그인 정보가 담겨있는 리스트,찾으려는 아이디와 패스워드가 들어감
+//일치하는 아이디와 비밀번호가 있으면 true 반환
+bool matchLogin(
+    list<Login>& LoginList, string findid,string findpass) {
+    list<Login>::iterator it;
+    for (it = LoginList.begin(); it != LoginList.end(); ++it) {
+        if (findid == it->getId()) {
+            if (findpass == it->getPassword()) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
+    }
+}
+
+
 // 모드에 따라 이름/저자로 완전히 일치하는 도서 찾기
-// moode: 0(제목), 기타(저자)
+// mode: 0(제목), 기타(저자)
 list<Book>::iterator findSame(list<Book> &myList, int mode, string compare) {
     list<Book>::iterator it;
     string temp;
