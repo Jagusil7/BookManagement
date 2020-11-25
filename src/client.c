@@ -8,7 +8,7 @@
 
 struct __MsgCalc {
     long mtype;
-    int data;
+    char data[20];
 };
 typedef struct __MsgCalc MsgCalc;
 
@@ -41,13 +41,13 @@ int main(void) {
 
     printf("enter your ID: ");
     fflush(stdout);
-    int data;
-    scanf("%d", &data);
+    char data[20];
+    scanf("%s", data);
     fflush(stdin);
 
     memset(&msgCalc, 0x00, sizeof(MsgCalc));
     msgCalc.mtype = 1;
-    msgCalc.data = data;
+    strcpy(msgCalc.data, data);
     msgsnd(msqid, &msgCalc, sizeof(MsgCalc) - sizeof(long), 0);
     return 0;
 }

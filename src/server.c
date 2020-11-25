@@ -8,7 +8,7 @@
 
 struct __MsgCalc {
     long mtype;
-    int data;
+    char data[20];
 };
 typedef struct __MsgCalc MsgCalc;
 
@@ -45,12 +45,12 @@ int main(void) {
         return 0;
     }
 
-    signal(SIGINT, signalHandler); // 뭔데
+    signal(SIGINT, signalHandler);
 
     puts("wait.");
     memset(&msgCalc, 0x00, sizeof(MsgCalc));
     msgrcv(msqid, &msgCalc, sizeof(MsgCalc) - sizeof(long), 1, 0);
-    printf("ID: %d\n", msgCalc.data);
+    printf("ID: %s\n", msgCalc.data);
 
     fflush(stdout);
     return 0;
