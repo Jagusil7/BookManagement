@@ -8,7 +8,8 @@
 
 struct __MsgCalc {
     long mtype;
-    char data[20];
+    char id[20];
+    char pw[20];
 };
 typedef struct __MsgCalc MsgCalc;
 
@@ -39,15 +40,31 @@ int main(void) {
         return 0;
     }
 
+    char id[20];
+    char pw[20];
+
     printf("enter your ID: ");
     fflush(stdout);
-    char data[20];
-    scanf("%s", data);
+    scanf("%s", id);
     fflush(stdin);
+
+    printf("enter your PW: ");
+    fflush(stdout);
+    scanf("%s", pw);
 
     memset(&msgCalc, 0x00, sizeof(MsgCalc));
     msgCalc.mtype = 1;
-    strcpy(msgCalc.data, data);
+    strcpy(msgCalc.id, id);
+    strcpy(msgCalc.pw, pw);
     msgsnd(msqid, &msgCalc, sizeof(MsgCalc) - sizeof(long), 0);
+
+    memset(&msgRslt, 0x00, sizeof(MsgRslt));
+    msgrcv(msqid, &msgRslt, sizeof(MsgRslt) - sizeof(long), 2, 0);
+    if (msgRslt.result == 1) {
+        printf("로그인성공!");
+    } else {
+        printf("로그인 실패");
+        printf("%d", msgRslt.result);
+    }
     return 0;
 }

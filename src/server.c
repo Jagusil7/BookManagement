@@ -8,7 +8,8 @@
 
 struct __MsgCalc {
     long mtype;
-    char data[20];
+    char id[20];
+    char pw[20];
 };
 typedef struct __MsgCalc MsgCalc;
 
@@ -50,8 +51,19 @@ int main(void) {
     puts("wait.");
     memset(&msgCalc, 0x00, sizeof(MsgCalc));
     msgrcv(msqid, &msgCalc, sizeof(MsgCalc) - sizeof(long), 1, 0);
-    printf("ID: %s\n", msgCalc.data);
-
     fflush(stdout);
+
+    // 이하는 제대로 받았는지 테스트.
+    // 파일에서 아이디랑 비번 일치하는지 확인하도록 수정할 것.
+    printf("ID: %s\n", msgCalc.id);
+    printf("PW: %s\n", msgCalc.pw);
+
+    // 존재하는 아이디랑 비밀번호면 1을 전송
+    int result = 1;
+    memset(&msgRslt, 0x00, sizeof(MsgRslt));
+    msgRslt.mtype = 2;
+    msgRslt.result = result;
+    msgsnd(msqid, &msgRslt, sizeof(MsgRslt) - sizeof(long), 0);
+    printf("해당 아이디 로그인 승인 완료.");
     return 0;
 }
