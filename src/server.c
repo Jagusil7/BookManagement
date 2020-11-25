@@ -59,7 +59,7 @@ int main(void) {
     printf("PW: %s\n", msgCalc.pw);
 
     // 존재하는 아이디랑 비밀번호면 1을 전송
-    int result = 1;
+    int result = 1; // 0이면 로그인 실패, 1이면 guest, 2이면 관리자
     memset(&msgRslt, 0x00, sizeof(MsgRslt));
     msgRslt.mtype = 2;
     msgRslt.result = result;
