@@ -1,3 +1,4 @@
+
 #include <fcntl.h>
 #include <iostream>
 #include <list>
@@ -13,7 +14,6 @@
 using namespace std;
 #define MAX_NAME_LEN 64
 #define MAX_ID_LEN 10
-
 
 // 디버그 편의를 위해 단일 파일로 제작.
 // 추후 완전히 완성 후 분리.
@@ -63,7 +63,7 @@ class Book {
     // Search book by title or writer
     void bookSearch();
 
-    Book *next = nullptr;
+    Book *next = NULL;
 
   private:
     char title[MAX_NAME_LEN];
@@ -73,22 +73,22 @@ class Book {
     int publishing;
 };
 
-// guest만 가입 가능/ 관리자는 main함수 처음에(id:manager123, password:ilovebook,
-// personalNum:0)로 따로 만들어주세요!
+// guest만 가입 가능/ 관리자는 main함수 처음에(id:manager123,
+// password:ilovebook, personalNum:0)로 따로 만들어주세요!
 class Login {
-public:
+  public:
     Login() {
         memset(this->id, 0x00, MAX_NAME_LEN + 1);
         memset(this->password, 0x00, MAX_NAME_LEN + 1);
         this->personalNo = 0;
     }
     Login(string id, string password) {
-        number = 0;
+        int number = 0;
 
-        memcpy(this->id, id.c_str(), MAX_NAME_LEN);
-        memcpy(this->password, password.c_str(), MAX_NAME_LEN);
-        this->personalNo =
-            ++number; // guest 가입하면 자동적으로 1부터 personalnumber 부여(따로 넣어줄 필요 X)
+        strcpy(this->id, id.c_str());
+        strcpy(this->password, password.c_str());
+        this->personalNo = ++number; // guest 가입하면 자동적으로 1부터
+        // personalnumber 부여(따로 넣어줄 필요 X)
     }
 
     void setId(string id) { memcpy(this->id, id.c_str(), MAX_NAME_LEN); }
@@ -103,32 +103,53 @@ public:
 
     static int number;
 
-private:
+  private:
     char id[MAX_ID_LEN];
     char password[MAX_ID_LEN];
     int personalNo;
 };
 
+bool Register(string id, string password) {
+
+    list<Login> LoginList;
+    Login login = Login(id, password);
+    LoginList.push_back(login);
+    cout << ">>Sucessfully added to list" << endl;
+    string filepath = "./member.dat";
+    int fd = open(filepath.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0644);
+    if (fd == -1) {
+        perror("open() error");
+        return 1;
+    }
+    list<Login>::iterator iter;
+    for (iter = LoginList.begin(); iter != LoginList.end(); ++iter) {
+        if (write(fd, &(*iter), sizeof(Login)) == -1) {
+            perror("write() error");
+            return 2;
+        }
+    }
+    close(fd);
+    cout << "successfully registered" << endl;
+
+    return true;
+}
+
 //인자로 로그인 정보가 담겨있는 리스트,찾으려는 아이디와 패스워드가 들어감
 //일치하는 아이디와 비밀번호가 있으면 true 반환
-bool matchLogin(
-    list<Login>& LoginList, string findid,string findpass) {
+bool matchLogin(list<Login> &LoginList, string findid, string findpass) {
     list<Login>::iterator it;
     for (it = LoginList.begin(); it != LoginList.end(); ++it) {
         if (findid == it->getId()) {
             if (findpass == it->getPassword()) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
-        }
-        else {
+        } else {
             return false;
         }
     }
 }
-
 
 // 모드에 따라 이름/저자로 완전히 일치하는 도서 찾기
 // mode: 0(제목), 기타(저자)
@@ -203,6 +224,8 @@ int main() {
         bookList.push_back(book);
     }
 
+    // Login::Login(manager123, ilovebook);
+
     while (1) {
         cout << "<MENU>" << endl
              << "[0] Add Book" << endl
@@ -212,6 +235,8 @@ int main() {
              << "[4] Rent" << endl
              << "[5] Print My Rented Book" << endl
              << "[6] Save and Exit" << endl
+             << "[7] Register" << endl
+             << "[8] Login" << endl
              << ">> ";
         int menu;
         cin >> menu;
@@ -325,6 +350,18 @@ int main() {
             close(fd);
             return 0;
         }
-        cout << endl;
+        // cout << endl;
+        else if (menu == 7) { // register
+            string id = "";
+            string password = "";
+            cout << "<Register>" << endl;
+            cout << "Enter ID: ";
+            cin >> id;
+            getchar();
+            cout << "Enter Password: ";
+            cin >> password;
+            getchar();
+            Register(id, password);
+        }
     }
 }
