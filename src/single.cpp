@@ -24,13 +24,13 @@ class Book {
         memset(this->title, 0x00, MAX_NAME_LEN + 1);
         memset(this->writer, 0x00, MAX_NAME_LEN + 1);
         memset(this->bookNum, 0x00, MAX_NAME_LEN + 1);
-        this->status = 0;
+        memset(this->status, 0x00, MAX_NAME_LEN + 1);
     }
-    Book(string title, string writer, string bookNum, int id = 0) {
+    Book(string title, string writer, string bookNum, string id = "") {
         memcpy(this->title, title.c_str(), MAX_NAME_LEN);
         memcpy(this->writer, writer.c_str(), MAX_NAME_LEN);
         memcpy(this->bookNum, bookNum.c_str(), MAX_NAME_LEN);
-        this->status = id;
+        memcpy(this->status, id.c_str(), MAX_NAME_LEN);
     }
     void setTitle(string title) {
         memcpy(this->title, title.c_str(), MAX_NAME_LEN);
@@ -41,14 +41,19 @@ class Book {
     void setBookNum(string bookNum) {
         memcpy(this->bookNum, bookNum.c_str(), MAX_NAME_LEN);
     }
-    void setPublishing(int pub) { this->publishing = pub; }
-    void setStatus(int want) { this->status = want; }
+    // void setStatus(string want) {
+    //    this->status = want; } // want = id?
+    /*void setStatus(string want) {
+        memcpy(this->status, want.c_str(), MAX_NAME_LEN);
+    }*/
+    void setStatus(string status) {
+        memcpy(this->status, status.c_str(), MAX_NAME_LEN);
+    }
 
     string getTitle() { return string(this->title); }
     string getWriter() { return string(this->writer); }
     string getBookNum() { return string(this->bookNum); }
-    int getStatus() { return this->status; }
-    int getPublishing() { return this->publishing; }
+    string getStatus() { return string(this->status); }
 
     // Resgister book
     void bookRegi();
@@ -69,8 +74,7 @@ class Book {
     char title[MAX_NAME_LEN];
     char writer[MAX_NAME_LEN];
     char bookNum[MAX_NAME_LEN];
-    int status;
-    int publishing;
+    char status[MAX_NAME_LEN];
 };
 
 // guest만 가입 가능/ 관리자는 main함수 처음에(id:manager123,
@@ -114,7 +118,7 @@ bool Register(string id, string password) {
     list<Login> LoginList;
     Login login = Login(id, password);
     LoginList.push_back(login);
-    cout << ">>Sucessfully added to list" << endl;
+    // cout << ">>Sucessfully added to list" << endl;
     string filepath = "./member.dat";
     int fd = open(filepath.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0644);
     if (fd == -1) {
@@ -129,7 +133,7 @@ bool Register(string id, string password) {
         }
     }
     close(fd);
-    cout << "successfully registered" << endl;
+    // cout << "successfully registered" << endl;
 
     return true;
 }
@@ -187,17 +191,17 @@ list<Book>::iterator findContain(list<Book> &myList, int mode, string compare) {
 // 출력 (반복되는 부분 정리)
 void printStyle(list<Book>::iterator &iter) {
     cout << "TITLE:" << iter->getTitle() << " WRITER:" << iter->getWriter()
-         << " BOOKNUM:" << iter->getBookNum() << " STATUS:" << iter->getStatus()
-         << endl;
+         << " BOOKNUM:" << iter->getBookNum()
+         << " Rented ID:" << iter->getStatus() << endl;
 }
 
 // 해당 아이디로 빌린 도서 출력 (없으면 false)
-bool printRent(list<Book> &myList, int id) {
+bool printRent(list<Book> &myList, string id) {
     list<Book>::iterator it;
     bool result = false;
 
     for (it = myList.begin(); it != myList.end(); ++it) {
-        if ((*it).getStatus() == id) {
+        if ((it->getStatus()).compare(id) == 0) {
             result = true;
             printStyle(it);
         }
@@ -206,6 +210,9 @@ bool printRent(list<Book> &myList, int id) {
 }
 
 int main() {
+    //관리자는 main함수 처음에(id:manager123, password:ilovebook, personalNum:0)
+    // Register("manager123", "ilovebook");
+
     int fd = 0;
     string filename = "./BookList.dat";
 
@@ -224,19 +231,41 @@ int main() {
         bookList.push_back(book);
     }
 
-    // Login::Login(manager123, ilovebook);
+    cout << "<Login Page>" << endl
+         << "[0] Register" << endl
+         << "[1] Login" << endl
+         << ">> ";
+    int menu;
+    cin >> menu;
+    getchar();
+    cout << endl;
 
-    while (1) {
-        cout << "<MENU>" << endl
+    string id = "";
+    string password = "";
+    if (menu == 0) { // Register
+        cout << "<Register>" << endl;
+        cout << "Enter ID: ";
+        cin >> id;
+        getchar();
+        cout << "Enter Password: ";
+        cin >> password;
+        getchar();
+        Register(id, password);
+    } else if (menu == 1) { // Login
+    }
+
+    ///////////////////임시로 설정
+    int result = 1;
+    ///////////////////
+
+    // manager menu
+    while (result == 2) {
+        cout << "<MANAGER MENU>" << endl
              << "[0] Add Book" << endl
              << "[1] Delete Book" << endl
-             << "[2] Print List" << endl
+             << "[2] Book List" << endl
              << "[3] Search" << endl
-             << "[4] Rent" << endl
-             << "[5] Print My Rented Book" << endl
-             << "[6] Save and Exit" << endl
-             << "[7] Register" << endl
-             << "[8] Login" << endl
+             << "[4] Save and Exit" << endl
              << ">> ";
         int menu;
         cin >> menu;
@@ -272,12 +301,13 @@ int main() {
             if (iter == bookList.end()) {
                 cout << "ERROR: doesn't exist";
             }
-        } else if (menu == 2) { // print list
+        } else if (menu == 2) { // print book list
             cout << "[PRINT]" << endl;
             for (iter = bookList.begin(); iter != bookList.end(); ++iter) {
                 printStyle(iter);
             }
-        } else if (menu == 3) {
+
+        } else if (menu == 3) { // search book
             cout << "[SEARCH]" << endl;
             cout << "Find Title: ";
             string title;
@@ -295,41 +325,7 @@ int main() {
             } else {
                 printStyle(iter);
             }
-        } else if (menu == 4) {
-            string title;
-            int id;
-
-            cout << "[RENT]" << endl;
-            cout << "Title: ";
-            getline(cin, title);
-
-            iter = findSame(bookList, 0, title);
-            if (iter == bookList.end()) {
-                cout << "없는 도서입니다." << endl << endl;
-                continue;
-            }
-            if (iter->getStatus() != 0) {
-                cout << "이미 대여 중인 도서입니다." << endl << endl;
-                continue;
-            }
-            cout << "Enter target ID: ";
-            cin >> id;
-            getchar();
-            iter->setStatus(id);
-            cout << "빌렸습니다. (ID:" << id << ")" << endl;
-
-        } else if (menu == 5) {
-            int id;
-
-            cout << "[INQUIRY]" << endl;
-            cout << "Enter target ID: ";
-            cin >> id;
-            getchar();
-
-            if (printRent(bookList, id) == false) {
-                cout << "Nothing." << endl;
-            }
-        } else if (menu == 6) { // save doc and exit
+        } else if (menu == 4) { // save doc and exit
             if (remove(filename.c_str()) == -1) {
                 perror("remove() error!");
                 exit(-1);
@@ -350,18 +346,92 @@ int main() {
             close(fd);
             return 0;
         }
-        // cout << endl;
-        else if (menu == 7) { // register
-            string id = "";
-            string password = "";
-            cout << "<Register>" << endl;
-            cout << "Enter ID: ";
-            cin >> id;
-            getchar();
-            cout << "Enter Password: ";
-            cin >> password;
-            getchar();
-            Register(id, password);
+    }
+
+    // guest menu
+    while (result == 1) {
+        cout << "<Guest MENU>" << endl
+             << "[0] Print List" << endl
+             << "[1] Search" << endl
+             << "[2] Rent" << endl
+             << "[3] Print My Rented Book" << endl
+             << "[4] Save and Exit" << endl
+             << ">> ";
+        int menu;
+        cin >> menu;
+        getchar();
+        cout << endl;
+
+        if (menu == 0) { // print book list
+            cout << "[PRINT]" << endl;
+            for (iter = bookList.begin(); iter != bookList.end(); ++iter) {
+                printStyle(iter);
+            }
+
+        } else if (menu == 1) { // search book
+            cout << "[SEARCH]" << endl;
+            cout << "Find Title: ";
+            string title;
+            getline(cin, title);
+
+            iter = findSame(bookList, 0, title);
+            if (iter == bookList.end()) {
+                iter = findContain(bookList, 0, title);
+                if (iter == bookList.end())
+                    cout << "찾는 도서가 없습니다." << endl;
+                else {
+                    cout << "해당 문자열이 들어가는 도서가 존재합니다." << endl;
+                    printStyle(iter);
+                }
+            } else {
+                printStyle(iter);
+            }
+        } else if (menu == 2) { // rent
+            string title;
+
+            cout << "[RENT]" << endl;
+            cout << "Title: ";
+            getline(cin, title);
+
+            iter = findSame(bookList, 0, title);
+            if (iter == bookList.end()) {
+                cout << "없는 도서입니다." << endl << endl;
+                continue;
+            }
+            if (iter->getStatus() != "") {
+                cout << "이미 대여 중인 도서입니다." << endl << endl;
+                continue;
+            }
+            iter->setStatus(id);
+            cout << "빌렸습니다. (ID:" << id << ")" << endl;
+
+        } else if (menu == 3) { // rented book
+
+            cout << "[INQUIRY]" << endl;
+
+            if (printRent(bookList, id) == false) {
+                cout << "Nothing." << endl;
+            }
+        } else if (menu == 4) { // save doc and exit
+            if (remove(filename.c_str()) == -1) {
+                perror("remove() error!");
+                exit(-1);
+            }
+            fd = open(filename.c_str(), O_CREAT | O_RDWR, 0644);
+            if (fd == -1) {
+                perror("init() error!");
+                exit(-1);
+            }
+            ssize_t wsize = 0;
+            for (iter = bookList.begin(); iter != bookList.end(); iter++) {
+                wsize = write(fd, &(*iter), sizeof(Book));
+                if (wsize == -1) {
+                    cout << "write() error!" << endl;
+                    exit(-1);
+                }
+            }
+            close(fd);
+            return 0;
         }
     }
 }
