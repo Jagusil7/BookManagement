@@ -231,27 +231,33 @@ int main() {
         bookList.push_back(book);
     }
 
-    cout << "<Login Page>" << endl
-         << "[0] Register" << endl
-         << "[1] Login" << endl
-         << ">> ";
-    int menu;
-    cin >> menu;
-    getchar();
-    cout << endl;
-
     string id = "";
     string password = "";
-    if (menu == 0) { // Register
-        cout << "<Register>" << endl;
-        cout << "Enter ID: ";
-        cin >> id;
+    while (1) {
+        cout << "<Login Page>" << endl
+             << "[0] Register" << endl
+             << "[1] Login" << endl
+             << ">> ";
+        int menu;
+        cin >> menu;
         getchar();
-        cout << "Enter Password: ";
-        cin >> password;
-        getchar();
-        Register(id, password);
-    } else if (menu == 1) { // Login
+        cout << endl;
+        while (menu == 0) { // Register
+            cout << "<Register>" << endl;
+            cout << "Enter ID: ";
+            cin >> id;
+            getchar();
+            cout << "Enter Password: ";
+            cin >> password;
+            getchar();
+            Register(id, password);
+            cout << endl;
+            break;
+        }
+        while (menu == 1) { // Login
+            cout << "login" << endl;
+            break;
+        }
     }
 
     ///////////////////임시로 설정
