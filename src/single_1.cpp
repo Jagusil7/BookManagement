@@ -222,7 +222,6 @@ int main() {
     list<Book> bookList;
     list<Book>::iterator iter;
 
-
     fd = open(filename.c_str(), O_CREAT | O_RDWR, 0644);
     if (fd == -1) {
         cout << "open() error!" << endl;
@@ -252,16 +251,14 @@ int main() {
         cout << endl;
         if (menu == 0) { // Register
             cout << "<REGISTER>" << endl;
-            cout << "Enter ID: "; /*
+            cout << "Enter ID: ";
              cin >> id;
              getchar();
              cout << "Enter Password: ";
              cin >> password;
              getchar();
 
-             Login login = Login(id, password); */
-            Login manager = Login("manager123", "ilovebook");
-            manager.setPersonalNo(0);
+             Login login = Login(id, password);
 
             string filepath = "./member.dat";
             int rfd =
@@ -271,7 +268,7 @@ int main() {
                 exit(-1);
             }
 
-            if (write(rfd, &manager, sizeof(Login)) == -1) {
+            if (write(rfd, &login, sizeof(Login)) == -1) {
                 perror("write() error");
                 exit(-1);
             }
@@ -282,8 +279,8 @@ int main() {
             cout << endl;
         } else if (menu == 1) { // Login
 
-    list<Login> loginList;
-    list<Login>::iterator liter;
+            list<Login> loginList;
+            list<Login>::iterator liter;
 
             int rfd = 0;
             string filepath = "./member.dat";
@@ -296,13 +293,14 @@ int main() {
 
             while (read(rfd, rbuf, sizeof(Login)) != 0) {
                 Login member(rbuf->getId(), rbuf->getPassword());
-                if(rbuf->getId()=="manager123"&&rbuf->getPassword()=="ilovebook")
-                    rbuf->setPersonalNo(0);
                 loginList.push_back(member);
             }
             close(rfd);
 
-            for (liter = loginList.begin(); liter != loginList.end(); liter++) {
+            for (liter = loginList.begin(); liter != loginList.end(); liter++) { //set manager personalNo to 0
+                if (liter->getId() == "manager123" &&
+                    liter->getPassword() == "ilovebook")
+                    liter->setPersonalNo(0);
                 cout << liter->getId() << " " << liter->getPassword() << " "
                      << liter->getPersonalNo() << endl;
             }
