@@ -13,8 +13,7 @@
 
 using namespace std;
 #define MAX_NAME_LEN 64
-#define MAX_ID_LEN 10
-
+#define MAX_ID_LEN 20
 // 디버그 편의를 위해 단일 파일로 제작.
 // 추후 완전히 완성 후 분리.
 
@@ -79,6 +78,7 @@ class Book {
 
 // guest만 가입 가능/ 관리자는 main함수 처음에(id:manager123,
 // password:ilovebook, personalNum:0)로 따로 만들어주세요!
+
 class Login {
   public:
     Login() {
@@ -87,11 +87,10 @@ class Login {
         this->personalNo = 0;
     }
     Login(string id, string password) {
-        int number = 0;
 
         strcpy(this->id, id.c_str());
         strcpy(this->password, password.c_str());
-        this->personalNo = ++number; // guest 가입하면 자동적으로 1부터
+        this->personalNo = 1; // guest 가입하면 자동적으로 1부터
         // personalnumber 부여(따로 넣어줄 필요 X)
     }
 
@@ -105,54 +104,28 @@ class Login {
     string getPassword() { return string(this->password); }
     int getPersonalNo() { return this->personalNo; }
 
-    static int number;
-
   private:
     char id[MAX_ID_LEN];
     char password[MAX_ID_LEN];
     int personalNo;
 };
 
-bool Register(string id, string password) {
-
-    list<Login> LoginList;
-    Login login = Login(id, password);
-    LoginList.push_back(login);
-    // cout << ">>Sucessfully added to list" << endl;
-    string filepath = "./member.dat";
-    int fd = open(filepath.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0644);
-    if (fd == -1) {
-        perror("open() error");
-        return 1;
-    }
-    list<Login>::iterator iter;
-    for (iter = LoginList.begin(); iter != LoginList.end(); ++iter) {
-        if (write(fd, &(*iter), sizeof(Login)) == -1) {
-            perror("write() error");
-            return 2;
-        }
-    }
-    close(fd);
-    // cout << "successfully registered" << endl;
-
-    return true;
-}
-
 //인자로 로그인 정보가 담겨있는 리스트,찾으려는 아이디와 패스워드가 들어감
-//일치하는 아이디와 비밀번호가 있으면 true 반환
-bool matchLogin(list<Login> &LoginList, string findid, string findpass) {
+//일치하는 아이디와 비밀번호가 있으면 manager:1, guest:2 반환/ 없으면 0 반환
+int matchLogin(list<Login> &LoginList, string findid, string findpass) {
     list<Login>::iterator it;
     for (it = LoginList.begin(); it != LoginList.end(); ++it) {
         if (findid == it->getId()) {
             if (findpass == it->getPassword()) {
-                return true;
-            } else {
-                return false;
+                if (it->getPersonalNo() == 0) {
+                    return 1;
+                } else {
+                    return 2;
+                }
             }
-        } else {
-            return false;
         }
     }
+    return 0;
 }
 
 // 모드에 따라 이름/저자로 완전히 일치하는 도서 찾기
@@ -233,39 +206,108 @@ int main() {
 
     string id = "";
     string password = "";
+
+    int result; // manager, guest
+
     while (1) {
+
         cout << "<Login Page>" << endl
-             << "[0] Register" << endl
+             << "[0] Sign Up" << endl
              << "[1] Login" << endl
              << ">> ";
-        int menu;
+        int menu = 1;
         cin >> menu;
         getchar();
         cout << endl;
-        while (menu == 0) { // Register
-            cout << "<Register>" << endl;
+        if (menu == 0) { // Register
+            cout << "<SIGN UP>" << endl;
             cout << "Enter ID: ";
             cin >> id;
             getchar();
             cout << "Enter Password: ";
             cin >> password;
             getchar();
-            Register(id, password);
+            Login login(id, password);
+
+            int tfd;
+            string filepath = "./member.dat";
+            Login *tbuf = (Login *)malloc(sizeof(Login));
+            tfd = open(filepath.c_str(), O_RDWR);
+            if (tfd == -1) {
+                perror("open() error!");
+                exit(-1);
+            }
+
+            bool same = false;
+            while (read(tfd, tbuf, sizeof(Login)) != 0) {
+                if (id == tbuf->getId()) {
+                    same = true;
+                    close(tfd);
+                    break;
+                }
+            }
+            if (same == true) {
+                cout << "중복되는 아이디가 존재합니다." << endl;
+                continue;
+            }
+
+            if (write(tfd, &login, sizeof(Login)) == -1) {
+                perror("write() error");
+                exit(-1);
+            }
+
+            close(tfd);
+            cout << "successfully registered" << endl;
+
             cout << endl;
-            break;
-        }
-        while (menu == 1) { // Login
-            cout << "login" << endl;
-            break;
+        } else if (menu == 1) { // Login
+
+            list<Login> loginList;
+            list<Login>::iterator liter;
+
+            int rfd = 0;
+            string filepath = "./member.dat";
+            Login *rbuf = (Login *)malloc(sizeof(Login));
+            rfd = open(filepath.c_str(), O_RDONLY);
+            if (rfd == -1) {
+                perror("open() error!");
+                exit(-1);
+            }
+
+            while (read(rfd, rbuf, sizeof(Login)) != 0) {
+                Login member(rbuf->getId(), rbuf->getPassword());
+                loginList.push_back(member);
+            }
+            close(rfd);
+
+            //매니저 아이디 생성시 매니저의 personalNo는 0
+            for (liter = loginList.begin(); liter != loginList.end(); liter++) {
+                if (liter->getId() == "manager123" &&
+                    liter->getPassword() == "ilovebook")
+                    liter->setPersonalNo(0);
+                cout << liter->getId() << " " << liter->getPassword() << " "
+                     << liter->getPersonalNo() << endl;
+            }
+
+            cout << "<LOGIN>" << endl;
+            cout << "Enter ID: ";
+            cin >> id;
+            getchar();
+            cout << "Enter Password: ";
+            cin >> password;
+            getchar();
+            result = matchLogin(loginList, id, password);
+            if (result == 1 || result == 2) {
+                break;
+            } else {
+                cout << "일치하는 아이디와 비밀번호가 존재하지 않습니다."
+                     << endl;
+            }
         }
     }
 
-    ///////////////////임시로 설정
-    int result = 1;
-    ///////////////////
-
     // manager menu
-    while (result == 2) {
+    while (result == 1) {
         cout << "<MANAGER MENU>" << endl
              << "[0] Add Book" << endl
              << "[1] Delete Book" << endl
@@ -292,6 +334,7 @@ int main() {
 
             Book book(title, writer, bookN);
             bookList.push_back(book);
+            cout << endl;
 
         } else if (menu == 1) { // delete book
             string del;
@@ -307,11 +350,14 @@ int main() {
             if (iter == bookList.end()) {
                 cout << "ERROR: doesn't exist";
             }
+            cout << endl;
+
         } else if (menu == 2) { // print book list
             cout << "[PRINT]" << endl;
             for (iter = bookList.begin(); iter != bookList.end(); ++iter) {
                 printStyle(iter);
             }
+            cout << endl;
 
         } else if (menu == 3) { // search book
             cout << "[SEARCH]" << endl;
@@ -331,6 +377,8 @@ int main() {
             } else {
                 printStyle(iter);
             }
+            cout << endl;
+
         } else if (menu == 4) { // save doc and exit
             if (remove(filename.c_str()) == -1) {
                 perror("remove() error!");
@@ -350,18 +398,19 @@ int main() {
                 }
             }
             close(fd);
-            return 0;
+            break;
         }
     }
 
     // guest menu
-    while (result == 1) {
+    while (result == 2) {
         cout << "<Guest MENU>" << endl
-             << "[0] Print List" << endl
+             << "[0] Book List" << endl
              << "[1] Search" << endl
              << "[2] Rent" << endl
              << "[3] Print My Rented Book" << endl
-             << "[4] Save and Exit" << endl
+             << "[4] Return Book" << endl
+             << "[5] Save and Exit" << endl
              << ">> ";
         int menu;
         cin >> menu;
@@ -373,6 +422,7 @@ int main() {
             for (iter = bookList.begin(); iter != bookList.end(); ++iter) {
                 printStyle(iter);
             }
+            cout << endl;
 
         } else if (menu == 1) { // search book
             cout << "[SEARCH]" << endl;
@@ -392,6 +442,8 @@ int main() {
             } else {
                 printStyle(iter);
             }
+            cout << endl;
+
         } else if (menu == 2) { // rent
             string title;
 
@@ -410,6 +462,7 @@ int main() {
             }
             iter->setStatus(id);
             cout << "빌렸습니다. (ID:" << id << ")" << endl;
+            cout << endl;
 
         } else if (menu == 3) { // rented book
 
@@ -418,7 +471,32 @@ int main() {
             if (printRent(bookList, id) == false) {
                 cout << "Nothing." << endl;
             }
-        } else if (menu == 4) { // save doc and exit
+            cout << endl;
+
+        } else if (menu == 4) {
+            string returnbook;
+            cout << "반납할 책 이름을 입력해 주세요 : ";
+            getline(cin, returnbook);
+            iter = findSame(bookList, 0, returnbook);
+            // 책을 찾으면 반납가능한지 확인합니다.
+            if (iter != bookList.end()) {
+                //대여중이 아니면 불가능 메세지를 반환합니다.
+                if (iter->getStatus() != id) {
+                    cout << returnbook << "책이 대여중이 아닙니다" << endl;
+                }
+                //대여중일경우 반납합니다.
+                else {
+                    cout << returnbook << "책을 반납합니다" << endl;
+                    iter->setStatus("");
+                }
+            }
+            //찾는책이 없을경우 출력합니다.
+            else {
+                cout << "찾는 책이 없습니다" << endl;
+            }
+            cout << endl;
+
+        } else if (menu == 5) { // save doc and exit
             if (remove(filename.c_str()) == -1) {
                 perror("remove() error!");
                 exit(-1);
@@ -437,7 +515,8 @@ int main() {
                 }
             }
             close(fd);
-            return 0;
+            break;
         }
     }
+    return 0;
 }
