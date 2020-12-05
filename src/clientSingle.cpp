@@ -283,22 +283,21 @@ int main() {
             }
             cout << endl;
         } else if (menu == 1) { // Login
-            char id[20];
+            char ids[20];
             char pw[20];
 
             cout << "<LOGIN>" << endl;
             cout << "Enter ID: ";
-            cin >> id;
+            cin >> ids;
             getchar();
 
             cout << "enter your PW: ";
-            ;
             cin >> pw;
             getchar();
 
             memset(&msgCalc, 0x00, sizeof(MsgCalc));
             msgCalc.mtype = 1;
-            strcpy(msgCalc.id, id);
+            strcpy(msgCalc.id, ids);
             strcpy(msgCalc.pw, pw);
             msgCalc.mode = 1;
             msgsnd(msqid, &msgCalc, sizeof(MsgCalc) - sizeof(long), 0);
@@ -307,6 +306,8 @@ int main() {
             msgrcv(msqid, &msgRslt, sizeof(MsgRslt) - sizeof(long), 2, 0);
             result = msgRslt.result;
             if (result == 1 | result == 2) {
+                id = ids;
+                password = pw;
                 break;
             } else {
                 cout << "일치하는 아이디와 비밀번호가 존재하지 않습니다."
