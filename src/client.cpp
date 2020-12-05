@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "BookInfo.hpp"
+#include "Message.hpp"
 
 using namespace std;
 #define MAX_NAME_LEN 64
@@ -20,128 +21,23 @@ using namespace std;
 // 디버그 편의를 위해 단일 파일로 제작.
 // 추후 완전히 완성 후 분리.
 
-struct __MsgCalc {
-    long mtype;
-    char id[20];
-    char pw[20];
-    int mode;
-};
-typedef struct __MsgCalc MsgCalc;
-
-struct __MsgRslt {
-    long mtype;
-    int result;
-};
-typedef struct __MsgRslt MsgRslt;
-
 key_t mykey = 0;
 int msqid = 0;
 
 // guest만 가입 가능/ 관리자는 main함수 처음에(id:manager123,
 // password:ilovebook, personalNum:0)로 따로 만들어주세요!
 
-class Login {
-  public:
-    Login() {
-        memset(this->id, 0x00, MAX_NAME_LEN + 1);
-        memset(this->password, 0x00, MAX_NAME_LEN + 1);
-        this->personalNo = 0;
-    }
-    Login(string id, string password) {
-
-        strcpy(this->id, id.c_str());
-        strcpy(this->password, password.c_str());
-        this->personalNo = 1; // guest 가입하면 자동적으로 1부터
-        // personalnumber 부여(따로 넣어줄 필요 X)
-    }
-
-    void setId(string id) { memcpy(this->id, id.c_str(), MAX_NAME_LEN); }
-    void setPassword(string password) {
-        memcpy(this->password, password.c_str(), MAX_NAME_LEN);
-    }
-    void setPersonalNo(int personalNo) { this->personalNo = personalNo; }
-
-    string getId() { return string(this->id); }
-    string getPassword() { return string(this->password); }
-    int getPersonalNo() { return this->personalNo; }
-
-  private:
-    char id[MAX_ID_LEN];
-    char password[MAX_ID_LEN];
-    int personalNo;
-};
-
-//인자로 로그인 정보가 담겨있는 리스트,찾으려는 아이디와 패스워드가 들어감
-//일치하는 아이디와 비밀번호가 있으면 manager:1, guest:2 반환/ 없으면 0 반환
-int matchLogin(list<Login> &LoginList, string findid, string findpass) {
-    list<Login>::iterator it;
-    for (it = LoginList.begin(); it != LoginList.end(); ++it) {
-        if (findid == it->getId()) {
-            if (findpass == it->getPassword()) {
-                if (it->getPersonalNo() == 0) {
-                    return 1;
-                } else {
-                    return 2;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
 // 모드에 따라 이름/저자로 완전히 일치하는 도서 찾기
 // mode: 0(제목), 기타(저자)
-list<Book>::iterator findSame(list<Book> &myList, int mode, string compare) {
-    list<Book>::iterator it;
-    string temp;
-    for (it = myList.begin(); it != myList.end(); ++it) {
-        if (mode == 0)
-            temp = it->getTitle();
-        else
-            temp = (*it).getWriter();
-        if (temp == compare) {
-            return it;
-        }
-    }
-    return myList.end();
-    // C++에서 iterator는 null을 가질 수 없어서 이렇게 반환.
-}
+list<Book>::iterator findSame(list<Book> &myList, int mode, string compare);
 // 해당 문자열이 포함된 도서 찾기. mode는 동일.
-list<Book>::iterator findContain(list<Book> &myList, int mode, string compare) {
-    list<Book>::iterator it;
-    string temp;
-    for (it = myList.begin(); it != myList.end(); ++it) {
-        if (mode == 0)
-            temp = (*it).getTitle();
-        else
-            temp = (*it).getWriter();
-        if (temp.find(compare) != string::npos) {
-            return it;
-        }
-    }
-    return myList.end();
-}
+list<Book>::iterator findContain(list<Book> &myList, int mode, string compare);
 
 // 출력 (반복되는 부분 정리)
-void printStyle(list<Book>::iterator &iter) {
-    cout << "TITLE:" << iter->getTitle() << " WRITER:" << iter->getWriter()
-         << " BOOKNUM:" << iter->getBookNum()
-         << " Rented ID:" << iter->getStatus() << endl;
-}
+void printStyle(list<Book>::iterator &iter);
 
 // 해당 아이디로 빌린 도서 출력 (없으면 false)
-bool printRent(list<Book> &myList, string id) {
-    list<Book>::iterator it;
-    bool result = false;
-
-    for (it = myList.begin(); it != myList.end(); ++it) {
-        if ((it->getStatus()).compare(id) == 0) {
-            result = true;
-            printStyle(it);
-        }
-    }
-    return result;
-}
+bool printRent(list<Book> &myList, string id);
 
 int main() {
     //관리자는 main함수 처음에(id:manager123, password:ilovebook, personalNum:0)
@@ -472,4 +368,50 @@ int main() {
         }
     }
     return 0;
+}
+list<Book>::iterator findSame(list<Book> &myList, int mode, string compare) {
+    list<Book>::iterator it;
+    string temp;
+    for (it = myList.begin(); it != myList.end(); ++it) {
+        if (mode == 0)
+            temp = it->getTitle();
+        else
+            temp = (*it).getWriter();
+        if (temp == compare) {
+            return it;
+        }
+    }
+    return myList.end();
+    // C++에서 iterator는 null을 가질 수 없어서 이렇게 반환.
+}
+list<Book>::iterator findContain(list<Book> &myList, int mode, string compare) {
+    list<Book>::iterator it;
+    string temp;
+    for (it = myList.begin(); it != myList.end(); ++it) {
+        if (mode == 0)
+            temp = (*it).getTitle();
+        else
+            temp = (*it).getWriter();
+        if (temp.find(compare) != string::npos) {
+            return it;
+        }
+    }
+    return myList.end();
+}
+void printStyle(list<Book>::iterator &iter) {
+    cout << "TITLE:" << iter->getTitle() << " WRITER:" << iter->getWriter()
+         << " BOOKNUM:" << iter->getBookNum()
+         << " Rented ID:" << iter->getStatus() << endl;
+}
+bool printRent(list<Book> &myList, string id) {
+    list<Book>::iterator it;
+    bool result = false;
+
+    for (it = myList.begin(); it != myList.end(); ++it) {
+        if ((it->getStatus()).compare(id) == 0) {
+            result = true;
+            printStyle(it);
+        }
+    }
+    return result;
 }

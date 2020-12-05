@@ -12,81 +12,20 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "Login.hpp"
+#include "Message.hpp"
+
 using namespace std;
 #define MAX_NAME_LEN 64
 #define MAX_ID_LEN 20
 
-class Login {
-  public:
-    Login() {
-        memset(this->id, 0x00, MAX_NAME_LEN + 1);
-        memset(this->password, 0x00, MAX_NAME_LEN + 1);
-        this->personalNo = 0;
-    }
-    Login(string id, string password) {
-
-        strcpy(this->id, id.c_str());
-        strcpy(this->password, password.c_str());
-        this->personalNo = 1; // guest 가입하면 자동적으로 1부터
-        // personalnumber 부여(따로 넣어줄 필요 X)
-    }
-
-    void setId(string id) { memcpy(this->id, id.c_str(), MAX_NAME_LEN); }
-    void setPassword(string password) {
-        memcpy(this->password, password.c_str(), MAX_NAME_LEN);
-    }
-    void setPersonalNo(int personalNo) { this->personalNo = personalNo; }
-
-    string getId() { return string(this->id); }
-    string getPassword() { return string(this->password); }
-    int getPersonalNo() { return this->personalNo; }
-
-  private:
-    char id[MAX_ID_LEN];
-    char password[MAX_ID_LEN];
-    int personalNo;
-};
-
 //인자로 로그인 정보가 담겨있는 리스트,찾으려는 아이디와 패스워드가 들어감
 //일치하는 아이디와 비밀번호가 있으면 manager:1, guest:2 반환/ 없으면 0 반환
-int matchLogin(list<Login> &LoginList, string findid, string findpass) {
-    list<Login>::iterator it;
-    for (it = LoginList.begin(); it != LoginList.end(); ++it) {
-        if (findid == it->getId()) {
-            if (findpass == it->getPassword()) {
-                if (it->getPersonalNo() == 0) {
-                    return 1;
-                } else {
-                    return 2;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
-struct __MsgCalc {
-    long mtype;
-    char id[20];
-    char pw[20];
-    int mode;
-};
-typedef struct __MsgCalc MsgCalc;
-
-struct __MsgRslt {
-    long mtype;
-    int result;
-};
-typedef struct __MsgRslt MsgRslt;
+int matchLogin(list<Login> &LoginList, string findid, string findpass);
+void signalHandler(int signum);
 
 key_t mykey = 0;
 int msqid = 0;
-
-void signalHandler(int signum) {
-    if (signum == SIGINT) {
-        msgctl(msqid, IPC_RMID, NULL);
-    }
-}
 
 int main(void) {
     // Login class 관련
@@ -204,4 +143,25 @@ int main(void) {
         }
     }
     return 0;
+}
+
+int matchLogin(list<Login> &LoginList, string findid, string findpass) {
+    list<Login>::iterator it;
+    for (it = LoginList.begin(); it != LoginList.end(); ++it) {
+        if (findid == it->getId()) {
+            if (findpass == it->getPassword()) {
+                if (it->getPersonalNo() == 0) {
+                    return 1;
+                } else {
+                    return 2;
+                }
+            }
+        }
+    }
+    return 0;
+}
+void signalHandler(int signum) {
+    if (signum == SIGINT) {
+        msgctl(msqid, IPC_RMID, NULL);
+    }
 }
