@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "BookInfo.hpp"
+
 using namespace std;
 #define MAX_NAME_LEN 64
 #define MAX_ID_LEN 20
@@ -34,65 +36,6 @@ typedef struct __MsgRslt MsgRslt;
 
 key_t mykey = 0;
 int msqid = 0;
-
-class Book {
-  public:
-    Book() {
-        memset(this->title, 0x00, MAX_NAME_LEN + 1);
-        memset(this->writer, 0x00, MAX_NAME_LEN + 1);
-        memset(this->bookNum, 0x00, MAX_NAME_LEN + 1);
-        memset(this->status, 0x00, MAX_NAME_LEN + 1);
-    }
-    Book(string title, string writer, string bookNum, string id = "") {
-        memcpy(this->title, title.c_str(), MAX_NAME_LEN);
-        memcpy(this->writer, writer.c_str(), MAX_NAME_LEN);
-        memcpy(this->bookNum, bookNum.c_str(), MAX_NAME_LEN);
-        memcpy(this->status, id.c_str(), MAX_NAME_LEN);
-    }
-    void setTitle(string title) {
-        memcpy(this->title, title.c_str(), MAX_NAME_LEN);
-    }
-    void setWriter(string writer) {
-        memcpy(this->writer, writer.c_str(), MAX_NAME_LEN);
-    }
-    void setBookNum(string bookNum) {
-        memcpy(this->bookNum, bookNum.c_str(), MAX_NAME_LEN);
-    }
-    // void setStatus(string want) {
-    //    this->status = want; } // want = id?
-    /*void setStatus(string want) {
-        memcpy(this->status, want.c_str(), MAX_NAME_LEN);
-    }*/
-    void setStatus(string status) {
-        memcpy(this->status, status.c_str(), MAX_NAME_LEN);
-    }
-
-    string getTitle() { return string(this->title); }
-    string getWriter() { return string(this->writer); }
-    string getBookNum() { return string(this->bookNum); }
-    string getStatus() { return string(this->status); }
-
-    // Resgister book
-    void bookRegi();
-    // Delete book
-    void bookDel();
-    // Print list
-    void printList();
-    // Rent book
-    void bookRent();
-    // Return book
-    void bookReturn();
-    // Search book by title or writer
-    void bookSearch();
-
-    Book *next = NULL;
-
-  private:
-    char title[MAX_NAME_LEN];
-    char writer[MAX_NAME_LEN];
-    char bookNum[MAX_NAME_LEN];
-    char status[MAX_NAME_LEN];
-};
 
 // guest만 가입 가능/ 관리자는 main함수 처음에(id:manager123,
 // password:ilovebook, personalNum:0)로 따로 만들어주세요!
