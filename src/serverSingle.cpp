@@ -93,29 +93,6 @@ int main(void) {
     list<Login> loginList;
     list<Login>::iterator liter;
 
-    int rfd = 0;
-    string filepath = "./member.dat";
-    Login *rbuf = (Login *)malloc(sizeof(Login));
-    rfd = open(filepath.c_str(), O_RDONLY);
-    if (rfd == -1) {
-        perror("open() error!");
-        exit(-1);
-    }
-
-    while (read(rfd, rbuf, sizeof(Login)) != 0) {
-        Login member(rbuf->getId(), rbuf->getPassword());
-        loginList.push_back(member);
-    }
-    close(rfd);
-
-    for (liter = loginList.begin(); liter != loginList.end(); liter++) {
-        if (liter->getId() == "manager123" &&
-            liter->getPassword() == "ilovebook")
-            liter->setPersonalNo(0);
-        cout << liter->getId() << " " << liter->getPassword() << " "
-             << liter->getPersonalNo() << endl;
-    }
-
     // messageQueue 관련
     int result = 0; // 0이면 실패, 1이면 guest, 2이면 관리자
     MsgCalc msgCalc;
@@ -141,6 +118,28 @@ int main(void) {
     signal(SIGINT, signalHandler);
 
     while (1) {
+        int rfd = 0;
+        string filepath = "./member.dat";
+        Login *rbuf = (Login *)malloc(sizeof(Login));
+        rfd = open(filepath.c_str(), O_RDONLY);
+        if (rfd == -1) {
+            perror("open() error!");
+            exit(-1);
+        }
+        while (read(rfd, rbuf, sizeof(Login)) != 0) {
+            Login member(rbuf->getId(), rbuf->getPassword());
+            loginList.push_back(member);
+        }
+        close(rfd);
+
+        for (liter = loginList.begin(); liter != loginList.end(); liter++) {
+            if (liter->getId() == "manager123" &&
+                liter->getPassword() == "ilovebook")
+                liter->setPersonalNo(0);
+            cout << liter->getId() << " " << liter->getPassword() << " "
+                 << liter->getPersonalNo() << endl;
+        }
+
         cout << "wait..." << std::endl;
         memset(&msgCalc, 0x00, sizeof(MsgCalc));
         msgrcv(msqid, &msgCalc, sizeof(MsgCalc) - sizeof(long), 1, 0);
@@ -152,6 +151,42 @@ int main(void) {
         pw = msgCalc.pw;
         mode = msgCalc.mode;
         if (mode == 0) {
+            result = 1;
+            Login login(id, pw);
+
+            int tfd;
+            string filepath = "./member.dat";
+            Login *tbuf = (Login *)malloc(sizeof(Login));
+            tfd = open(filepath.c_str(), O_RDWR);
+            if (tfd == -1) {
+                perror("open() error!");
+                exit(-1);
+            }
+            bool same = false;
+            while (read(tfd, tbuf, sizeof(Login)) != 0) {
+                if (id == tbuf->getId()) {
+                    same = true;
+                    close(tfd);
+                    break;
+                }
+            }
+            if (same == true) {
+                cout << "중복되는 아이디 존재." << endl;
+                result = 0;
+            } else {
+                cout << "가입허가" << endl;
+                if (write(tfd, &login, sizeof(Login)) == -1) {
+                    perror("write() error");
+                    exit(-1);
+                }
+            }
+            close(tfd);
+
+            // 전송
+            memset(&msgRslt, 0x00, sizeof(MsgRslt));
+            msgRslt.mtype = 2;
+            msgRslt.result = result;
+            msgsnd(msqid, &msgRslt, sizeof(MsgRslt) - sizeof(long), 0);
 
         } else if (mode == 1) {
             result = matchLogin(loginList, id, pw);
@@ -160,9 +195,7 @@ int main(void) {
                 result = 0;
             } else {
                 cout << "로그인 허가" << endl;
-                cout << result << endl;
             }
-
             // 전송
             memset(&msgRslt, 0x00, sizeof(MsgRslt));
             msgRslt.mtype = 2;

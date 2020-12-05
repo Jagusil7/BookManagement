@@ -254,59 +254,47 @@ int main() {
         getchar();
         cout << endl;
         if (menu == 0) { // Register
+            char id[20];
+            char pw[20];
+
             cout << "<SIGN UP>" << endl;
             cout << "Enter ID: ";
             cin >> id;
             getchar();
             cout << "Enter Password: ";
-            cin >> password;
+            cin >> pw;
             getchar();
-            Login login(id, password);
 
-            int tfd;
-            string filepath = "./member.dat";
-            Login *tbuf = (Login *)malloc(sizeof(Login));
-            tfd = open(filepath.c_str(), O_RDWR);
-            if (tfd == -1) {
-                perror("open() error!");
-                exit(-1);
-            }
+            memset(&msgCalc, 0x00, sizeof(MsgCalc));
+            msgCalc.mtype = 1;
+            strcpy(msgCalc.id, id);
+            strcpy(msgCalc.pw, pw);
+            msgCalc.mode = 0;
+            msgsnd(msqid, &msgCalc, sizeof(MsgCalc) - sizeof(long), 0);
 
-            bool same = false;
-            while (read(tfd, tbuf, sizeof(Login)) != 0) {
-                if (id == tbuf->getId()) {
-                    same = true;
-                    close(tfd);
-                    break;
-                }
-            }
-            if (same == true) {
+            memset(&msgRslt, 0x00, sizeof(MsgRslt));
+            msgrcv(msqid, &msgRslt, sizeof(MsgRslt) - sizeof(long), 2, 0);
+            result = msgRslt.result;
+            if (result == 0) {
                 cout << "중복되는 아이디가 존재합니다." << endl;
                 continue;
+            } else {
+                cout << "successfully registered" << endl;
             }
-
-            if (write(tfd, &login, sizeof(Login)) == -1) {
-                perror("write() error");
-                exit(-1);
-            }
-
-            close(tfd);
-            cout << "successfully registered" << endl;
-
             cout << endl;
         } else if (menu == 1) { // Login
             char id[20];
             char pw[20];
-            int mode = 1;
 
             cout << "<LOGIN>" << endl;
             cout << "Enter ID: ";
-            cout.flush();
             cin >> id;
+            getchar();
 
             cout << "enter your PW: ";
-            cout.flush();
+            ;
             cin >> pw;
+            getchar();
 
             memset(&msgCalc, 0x00, sizeof(MsgCalc));
             msgCalc.mtype = 1;
